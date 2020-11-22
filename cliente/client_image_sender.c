@@ -32,7 +32,10 @@ void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycle
 	void * retvals[threads_];
 	int valid_extension = detect_extension_pgm(fname);
 	if (valid_extension)
+		
 		{
+		//send_file(&new_message);
+		
 		for (int i = 0; i < threads_; ++i){
 			if (pthread_create(&threads_list[i], NULL, send_file, &new_message) != 0){
 				printf("\033[1;31mERROR: Can not create %i thread \033[0m;\n", i);
@@ -112,8 +115,6 @@ void* send_file (void* argument){
 	struct message *new_message = (struct message *)argument;
 
 	printf("Nuevo mensaje de un archivo %s con el ip %s y un numero de ciclos de %i\n", new_message->image_name, new_message->ip, new_message->cycles);
-
-	
 	/*
 	int sfd =0, n=0, b;
 	char rbuff[1024];
@@ -134,13 +135,13 @@ void* send_file (void* argument){
 	    perror("Connect");
 	    exit(1);
 	}*/
-	//FILE *fp = fopen("descarga1.png", "rb");
 	
 
 	
 	
 	int index = 0;
-	while(index <= new_message->cycles){
+	while(index < new_message->cycles){
+		
 		int sfd =0, n=0, b;
 		char rbuff[1024];
 		char sendbuffer[100];
@@ -160,13 +161,11 @@ void* send_file (void* argument){
 			perror("Connect");
 			exit(1);
 		}
-		//FILE *fp = fopen("descarga1.png", "rb");
-		
-		
-		
-		int index = 0;
 		FILE *fp = fopen(new_message->image_name, "rb");
+		
 		write(sfd, new_message->image_name, 256);
+		
+		
 		if(fp == NULL){
 	    	perror("File");
 	    	exit(2);
@@ -174,15 +173,16 @@ void* send_file (void* argument){
 		while( (b = fread(sendbuffer, 1, sizeof(sendbuffer), fp))>0 ){
 			send(sfd, sendbuffer, b, 0);
 		}
-		send(sfd, "\n", 0, 0);
-		memset(sendbuffer, '0', sizeof(sendbuffer));
+		strcpy(sendbuffer, " ");
 		index++;
 		fclose(fp);
 		printf("Dentro de los while\n");
+		fp = NULL;
 		close(sfd);
-		sleep(1);
 
 	}
+	//send(sfd, "final", 5, 0);
+	//close(sfd);
 
 	
 }

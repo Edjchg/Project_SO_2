@@ -13,8 +13,8 @@
 #include <zlib.h>
 #include <dirent.h>
 #define MAXCHAR 1000
-#define PORT 8081
-char *storage_directory_ = "./fifo_storage";
+#define PORT 8080
+char storage_directory_[] = "../fifo_storage/";
 int init_fifo_server(void){
     int fd =0, confd = 0,b,tot;
     struct sockaddr_in serv_addr;
@@ -37,16 +37,26 @@ int init_fifo_server(void){
     bind(fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     listen(fd, 100000);
     int counter = 0;
-    confd = accept(fd, (struct sockaddr*)&client, &len);
+    //confd = accept(fd, (struct sockaddr*)&client, &len);
     while (1)
     {
+        confd = accept(fd, (struct sockaddr*)&client, &len);
         printf("\n=> El IP del cliente es: %s\n", inet_ntop(AF_INET, &client.sin_addr, str, sizeof(str)));
         printf("=> EL id del cliente es: %i\n", confd);
+        //strcat();
+        //memset(buff, '0', sizeof(buff));
+        
+            
+        printf("%s\n", filename);
+        
         read(confd, filename, 256);
         char str[100];
         sprintf(str, "%d", counter);
         strcat(str, filename);
-        FILE* fp = fopen(str, "wb");
+        strcat(storage_directory_, str);
+        tot = 0;
+        memset(buff, '0', sizeof(buff));
+        FILE* fp = fopen(storage_directory_, "wb");
         if (fp != NULL)
         {
             while((b = recv(confd, buff, 1024,0))> 0 ) {
@@ -57,14 +67,20 @@ int init_fifo_server(void){
 		    if (b<0)
 		        perror("Receiving");
 		    
-            tot = 0;
+            //tot = 0;
             //strcat(storage_directory_, filename);
             process_image(storage_directory_);
-            memset(buff, '0', sizeof(buff));
+            //strcpy(filename, " ");
+            //memset(buff, '0', sizeof(buff));
+            fclose(fp);
+            fp = NULL;
+            strcpy(storage_directory_, "../fifo_storage/");
         }
-        fclose(fp);
+        strcpy(storage_directory_, "../fifo_storage/");
+        //fclose(fp);
         printf("Uno más\n");
         counter++;
+        
         
     }
     
