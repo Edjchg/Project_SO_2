@@ -1,5 +1,5 @@
-#include "fifo_server.h"
 #include "../sobel/sobel.h"
+#include "fifo_server.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -69,7 +69,7 @@ int init_fifo_server(void){
 		    
             //tot = 0;
             //strcat(storage_directory_, filename);
-            process_image(storage_directory_);
+            process_image(storage_directory_, counter);
             //strcpy(filename, " ");
             //memset(buff, '0', sizeof(buff));
             fclose(fp);
@@ -85,7 +85,7 @@ int init_fifo_server(void){
     }
     
 }
-void process_image(char* file_name){
+void process_image(char* file_name, int index){
     //Use sobel function...
     apply_sobel(file_name, index);
     printf("Processing the image %s with sobel algorithm\n", file_name);

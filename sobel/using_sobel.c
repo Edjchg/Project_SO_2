@@ -17,20 +17,23 @@ int main(int argc, char **argv)
 	sobel_edge_detector(&image, &out_image);	
 	
 	min_max_normalization(&out_image, out_image.imageData);
-	min_max_normalization(&out_image, out_image.gx);
-	min_max_normalization(&out_image, out_image.gy);
+	//min_max_normalization(&out_image, out_image.gx);
+	//min_max_normalization(&out_image, out_image.gy);
 
-	write_pgm_file(&out_image, dir, out_image.imageData, ".G.pgm");
+	//write_pgm_file(&out_image, dir, out_image.imageData, ".G.pgm");
+	write_pgm_file(&out_image, dir, out_image.imageData, "0.pgm");
 	printf("\nGradient saved: %s \n", dir);
-	write_pgm_file(&out_image, dir, out_image.gx, ".GX.pgm");
-	printf("Gradient X saved: %s \n", dir);
-	write_pgm_file(&out_image, dir, out_image.gy, ".GY.pgm");
-	printf("Gradient Y saved: %s \n", dir);
+	//write_pgm_file(&out_image, dir, out_image.gx, ".GX.pgm");
+	//write_pgm_file(&out_image, dir, out_image.gx, "1.pgm");
+	//printf("Gradient X saved: %s \n", dir);
+	//write_pgm_file(&out_image, dir, out_image.gy, ".GY.pgm");
+	//write_pgm_file(&out_image, dir, out_image.gy, "2.pgm");
+	//printf("Gradient Y saved: %s \n", dir);
 
 	free(image.imageData);
 	free(out_image.imageData);
-	free(out_image.gx);
-	free(out_image.gy);
+	//free(out_image.gx);
+	//free(out_image.gy);
 	
 	return 0;
 }
