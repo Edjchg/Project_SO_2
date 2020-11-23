@@ -236,5 +236,23 @@ void write_to_fifo_statistics(double time, int items){
 	strcat(pair, "]");
 	strcat(buffer1, pair);
 	fprintf(fp_total_time, "%s", pair);
+	
+	double average = (double)time/items;
+	char average_time[50];
+	sprintf(average_time, "%f", average);
+	FILE* fp_average_time = fopen(fn_average_time, "r+");
+	char buffer2[1000000];
+	memset(buffer2, 0, sizeof(buffer2));
+	fscanf(fp_average_time, "%s", buffer2);
+	char pair2[50];
+	memset(pair2, 0, sizeof(pair2));
+	strcat(pair2, "[");
+	strcat(pair2, average_time);
+	strcat(pair2, ",");
+	strcat(pair2, items_);
+	strcat(pair2, "]");
+	strcat(buffer2, pair2);
+	fprintf(fp_average_time, "%s", pair2);
+	fclose(fp_average_time);
 
 }
