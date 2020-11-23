@@ -17,17 +17,20 @@ def graph_average_time():
     # ·
     # ·
     # ·
-    plt.figure()
-    plt.subplot(311)  # 311 means: 3 rows 1 column 1st element:
-    plt.title("Fifo server average time graph")
+
     if len(list_average_time[0]) == 0 or len(list_average_time[1]) == 0:
         print("It can not plot inexisting points.")
     else:
+        plt.figure()
+        plt.subplot(311)  # 311 means: 3 rows 1 column 1st element:
+        plt.title("Fifo server average time graph")
         plt.plot(list_average_time[0], list_average_time[1])
         # add subplot for the other servers here
         # ·
         # ·
         # ·
+        plt.subplots_adjust(top=0.92, bottom=0.08, left=0.10, right=0.95, hspace=0.65,
+                            wspace=0.35)
         plt.show()
 
 
@@ -43,17 +46,19 @@ def graph_total_time():
     # ·
     # ·
     # ·
-    plt.figure()
-    plt.subplot(311)  # 311 means: 3 rows 1 column 1st element:
-    plt.title("Fifo server total time graph")
     if len(list_total_time[0]) == 0 or len(list_total_time[1]) == 0:
         print("It can not plot inexisting points.")
     else:
+        plt.figure()
+        plt.subplot(311)  # 311 means: 3 rows 1 column 1st element:
+        plt.title("Fifo server total time graph")
         plt.plot(list_total_time[0], list_total_time[1])
         # add subplot for the other servers here
         # ·
         # ·
         # ·
+        plt.subplots_adjust(top=0.92, bottom=0.08, left=0.10, right=0.95, hspace=0.65,
+                            wspace=0.35)
         plt.show()
 
 
