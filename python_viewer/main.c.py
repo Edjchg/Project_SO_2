@@ -2,15 +2,62 @@ import matplotlib.pyplot as plt
 
 
 def main():
+    graph_total_time()
+    graph_average_time()
+
+
+def graph_average_time():
     fifo_average_time = "../cliente/fifo_statistics/fifo_average_time.txt"
+    # add other server path here...
+    # ·
+    # ·
+    # ·
+    list_average_time = build_x_y_list(fifo_average_time)
+    # build the x y list here...
+    # ·
+    # ·
+    # ·
+    plt.figure()
+    plt.subplot(311)  # 311 means: 3 rows 1 column 1st element:
+    plt.title("Fifo server average time graph")
+    if len(list_average_time[0]) == 0 or len(list_average_time[1]) == 0:
+        print("It can not plot inexisting points.")
+    else:
+        plt.plot(list_average_time[0], list_average_time[1])
+        # add subplot for the other servers here
+        # ·
+        # ·
+        # ·
+        plt.show()
+
+
+def graph_total_time():
     fifo_total_time = "../cliente/fifo_statistics/fifo_total_time.txt"
-    list_total_time = build_total_time_list(fifo_total_time)
-    print(list_total_time)
-    plt.plot(list_total_time[0], list_total_time[1])
-    plt.show()
+    # add other server path here...
+    # ·
+    # ·
+    # ·
+
+    list_total_time = build_x_y_list(fifo_total_time)
+    # build the x y list here...
+    # ·
+    # ·
+    # ·
+    plt.figure()
+    plt.subplot(311)  # 311 means: 3 rows 1 column 1st element:
+    plt.title("Fifo server total time graph")
+    if len(list_total_time[0]) == 0 or len(list_total_time[1]) == 0:
+        print("It can not plot inexisting points.")
+    else:
+        plt.plot(list_total_time[0], list_total_time[1])
+        # add subplot for the other servers here
+        # ·
+        # ·
+        # ·
+        plt.show()
 
 
-def build_total_time_list(fifo_total_time):
+def build_x_y_list(fifo_total_time):
     f = open(fifo_total_time)
     buffer = f.read()
     buffer_len = len(buffer)
@@ -36,6 +83,8 @@ def build_total_time_list(fifo_total_time):
             y_list.append(float(number_y))
             number_x = ""
             number_y = ""
+        else:
+            i += 1
     return [x_list, y_list]
 
 
