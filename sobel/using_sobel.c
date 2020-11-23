@@ -5,7 +5,10 @@
 #include "sobel.h"
 //Compiling gcc -o using_sobel using_sobel.c sobel.c -lm
 int main(int argc, char **argv)
-{
+{	
+	char filename[] = "brain_492.pgm";
+	apply_sobel(filename, 1);
+	/*
 	pgm image, out_image;
 	char dir[200];
 	printf("Enter the file name: ");
@@ -31,7 +34,7 @@ int main(int argc, char **argv)
 	//printf("Gradient Y saved: %s \n", dir);
 
 	free(image.imageData);
-	free(out_image.imageData);
+	free(out_image.imageData);*/
 	//free(out_image.gx);
 	//free(out_image.gy);
 	

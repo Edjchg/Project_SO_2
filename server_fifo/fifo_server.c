@@ -13,7 +13,7 @@
 #include <zlib.h>
 #include <dirent.h>
 #define MAXCHAR 1000
-#define PORT 8080
+#define PORT 8103
 char storage_directory_[] = "../fifo_storage/";
 int init_fifo_server(void){
     int fd =0, confd = 0,b,tot;
@@ -35,7 +35,7 @@ int init_fifo_server(void){
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(PORT);
     bind(fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-    listen(fd, 100000);
+    listen(fd, 1000000);
     int counter = 0;
     //confd = accept(fd, (struct sockaddr*)&client, &len);
     while (1)
@@ -45,15 +45,24 @@ int init_fifo_server(void){
         printf("=> EL id del cliente es: %i\n", confd);
         //strcat();
         //memset(buff, '0', sizeof(buff));
-        
-            
-        printf("%s\n", filename);
-        
+
         read(confd, filename, 256);
+        if (strcmp(filename, "final") == 0)
+        {
+            break;
+        }
+        printf("Fname: %s\n", filename);
         char str[100];
-        sprintf(str, "%d", counter);
-        strcat(str, filename);
-        strcat(storage_directory_, str);
+        if(counter < 100){
+            sprintf(str, "%d", counter);
+            strcat(str, filename);
+            strcat(storage_directory_, str);
+        }else
+        {
+            sprintf(str, "%d", 99);
+            strcat(str, filename);
+            strcat(storage_directory_, str);
+        }
         tot = 0;
         memset(buff, '0', sizeof(buff));
         FILE* fp = fopen(storage_directory_, "wb");
@@ -61,7 +70,7 @@ int init_fifo_server(void){
         {
             while((b = recv(confd, buff, 1024,0))> 0 ) {
 		            tot+=b;
-		            fwrite(buff, 1, b, fp);
+                    fwrite(buff, 1, b, fp);
 		    }
             printf("=> Su peso es de: %d bytes.\n",tot);
 		    if (b<0)
@@ -77,16 +86,18 @@ int init_fifo_server(void){
             strcpy(storage_directory_, "../fifo_storage/");
         }
         strcpy(storage_directory_, "../fifo_storage/");
+        memset(filename, 0, sizeof(filename));
         //fclose(fp);
         printf("Uno más\n");
         counter++;
-        
-        
     }
     
 }
-void process_image(char* file_name, int index){
+void process_image(char file_name[], int index){
     //Use sobel function...
     apply_sobel(file_name, index);
     printf("Processing the image %s with sobel algorithm\n", file_name);
+}
+void send_finish(void){
+
 }

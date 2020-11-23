@@ -7,10 +7,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
-// ./client <ip> <puerto> <imagen> <hilos> <ciclos>
+#include <time.h>
+// ./client <ip> <puerto> <imagen> <hilos> <ciclos> <server>
 
 
-void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycles){
+void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycles, char* server){
 	//char fname[100];
 	//Converting the arguments to integers:
 	int valido = 0;
@@ -18,6 +19,7 @@ void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycle
 	int port_ = atoi(port);
 	int threads_ = atoi(threads);
 	int cycles_ = atoi(cycles);
+	int server_ = atoi(server);
 	int index = 0;
 	//Building the struct of the message:
 	struct message new_message;
@@ -25,12 +27,15 @@ void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycle
 	new_message.image_name = fname;
 	new_message.ip = ip;
 	new_message.port = port_;
+	new_message.server = server_;
 	//while(1){
 	printf("%i\n", threads_);
 	//Creating the threads:
 	pthread_t threads_list[threads_];
 	void * retvals[threads_];
 	int valid_extension = detect_extension_pgm(fname);
+	clock_t b_time;
+	b_time = clock();
 	if (valid_extension)
 		
 		{
@@ -50,32 +55,13 @@ void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycle
 				printf("\033[1;31mERROR: Can not join %i thread \033[0m;\n", n);
 				break;
 			}
-			
 		}
 	}else
 	{
 		printf("\033[1;31mThis is not a valid extension file \033[0m;\n");
 	}
 	
-	
-	
-	while(index <= threads_){
-		//printf("Escriba el nombre del archivo a enviar: ");
-		//gets(fname);
-		valido = detect_extension_pgm(fname);
-		if(valido){
-
-			
-			
-			//crear un thread llamando enviar archivo: enviar archivo será -> enviar_archivo(ip, fname, cycles);
-			printf("Enviando el archivo %s, con %i hilos y cada hilo con %i ciclos\n", new_message.image_name, threads_, new_message.cycles);
-			//send_file(ip, fname, cycles);
-		}else{
-			printf("Se ha ejecutado el comando de finalización de la tarea.\n");
-			break;
-		}
-		index++;
-	}
+	init_reading(&new_message, (double)b_time, threads_);
 }
 //######################################################################################################################################
 /*######################################################################################################################################
@@ -185,4 +171,70 @@ void* send_file (void* argument){
 	//close(sfd);
 
 	
+}
+void init_reading(void* msg, double init_time, int threads){
+	struct message *new_message = (struct message *)msg;
+	int sfd =0, n=0, b;
+	char rbuff[1024];
+	char sendbuffer[100];
+	struct sockaddr_in serv_addr;
+
+	memset(rbuff, '0', sizeof(rbuff));
+	sfd = socket(AF_INET, SOCK_STREAM, 0);
+
+	serv_addr.sin_family = AF_INET;
+	//serv_addr.sin_port = htons(5000);
+	serv_addr.sin_port = htons(new_message->port);
+	//serv_addr.sin_addr.s_addr = inet_addr("192.168.1.8");
+	serv_addr.sin_addr.s_addr = inet_addr(new_message->ip);
+
+	b=connect(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+	if (b==-1) {
+		perror("Connect");
+		exit(1);
+	}
+	send(sfd, "final\n", 5, 0);
+	while(1){
+		
+		if(read(sfd, sendbuffer, 256) != -1){
+			printf("Stop the reading %s\n", sendbuffer);
+			break;
+		}
+		printf("Reading\n");
+		
+	}
+	double tiempo_tomado = ((double)clock() - init_time)/CLOCKS_PER_SEC;
+	printf("\033[1;31m El programa duró %f, con %i elementos.\033[0m; \n", tiempo_tomado, new_message->cycles*threads);
+	// Writing the statistics for the FIFO Server:
+	if (new_message->server == 1)
+	{
+		write_to_fifo_statistics(tiempo_tomado, new_message->cycles*threads);
+	}
+	
+	
+}
+void write_to_fifo_statistics(double time, int items){
+	char *fn_total_time = "fifo_statistics/fifo_total_time.txt";
+	char *fn_average_time = "fifo_statistics/fifo_average_time.txt";
+
+	char time_[50];
+	sprintf(time_, "%f", time);
+	char items_[50];
+	sprintf(items_, "%d", items);
+
+	// Opening file for reading and writing:
+	FILE* fp_total_time = fopen(fn_total_time, "r+");
+	char buffer1[1000000];
+	memset(buffer1, 0, sizeof(buffer1));
+	fscanf(fp_total_time, "%s", buffer1);
+	char pair[50];
+	memset(pair, 0, sizeof(pair));
+	strcat(pair, "[");
+	strcat(pair, time_);
+	strcat(pair, ",");
+	strcat(pair, items_);
+	strcat(pair, "]");
+	strcat(buffer1, pair);
+	fprintf(fp_total_time, "%s", pair);
+
 }

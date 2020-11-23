@@ -19,5 +19,5 @@ int convolution(pgm* image, int kernel[3][3], int row, int col);
 void sobel_edge_detector(pgm* image, pgm* out_image);
 void min_max_normalization(pgm* image, int** matrix);
 void write_pgm_file(pgm* image, char dir[], int** matrix, char name[]);
-void apply_sobel(char* filename, int index);
+void apply_sobel(char* filename,int index);
 #endif

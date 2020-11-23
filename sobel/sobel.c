@@ -221,18 +221,19 @@ void write_pgm_file(pgm* image, char dir[], int** matrix, char name[]) {
 	} 
 	fclose(out_image);
 }
-void apply_sobel(char* filename, int index){
+void apply_sobel(char filename[], int index){
 	pgm image, out_image;
-	char dir[200];
+	printf("%s\n", filename);
 	read_pgm_file(filename, &image);
 	padding(&image);
 	init_out_image(&out_image, image);
 	sobel_edge_detector(&image, &out_image);	
 	min_max_normalization(&out_image, out_image.imageData);
-	if (index <= 100){
+	if (index < 100){
 		write_pgm_file(&out_image, filename, out_image.imageData, ".pgm");
+		printf("\n");
 	}
-	free(image.imageData);
-	free(out_image.imageData); 
+	//free(image.imageData);
+	//free(out_image.imageData); 
 }
 
