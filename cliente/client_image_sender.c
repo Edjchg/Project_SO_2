@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
+#include <sys/sysinfo.h>
+#define NANO2SEC 1000000000
 // ./client <ip> <puerto> <imagen> <hilos> <ciclos> <server>
 
 
@@ -194,28 +196,38 @@ void init_reading(void* msg, double init_time, int threads){
 		exit(1);
 	}
 	send(sfd, "final\n", 5, 0);
+	int time_;
 	while(1){
 		
 		if(read(sfd, sendbuffer, 256) != -1){
-			printf("Stop the reading %s\n", sendbuffer);
+			printf("%s\n", sendbuffer);
+			time_ = atoi(sendbuffer);
 			break;
 		}
 		printf("Reading\n");
 		
 	}
-	double tiempo_tomado = ((double)clock() - init_time)/CLOCKS_PER_SEC;
-	printf("\033[1;31m El programa duró %f, con %i elementos.\033[0m; \n", tiempo_tomado, new_message->cycles*threads);
+	double tiempo_tomado = ((double)time_ - init_time)/CLOCKS_PER_SEC;
+	struct timespec gettimenow;
+	double wall_time = ( (double)gettimenow.tv_sec + ( (double)gettimenow.tv_nsec / NANO2SEC ) );
+	double cpu_time = ( (double)clock() / sysconf (_SC_CLK_TCK));
+	//double cpu_time = ( (double)time_ / sysconf (_SC_CLK_TCK));
+	double proc_n = sysconf(_SC_NPROCESSORS_ONLN);
+	double cpu_usage = cpu_time/proc_n/wall_time;
+	printf("%ld\n", clock());
+	printf("\033[1;31m El programa duró %f, con %i elementos y un %f de CPU.\033[0m; \n", tiempo_tomado, new_message->cycles*threads, cpu_usage);
 	// Writing the statistics for the FIFO Server:
 	if (new_message->server == 1)
 	{
-		write_to_fifo_statistics(tiempo_tomado, new_message->cycles*threads);
+		write_to_fifo_statistics(tiempo_tomado, new_message->cycles*threads, cpu_usage);
 	}
 	
 	
 }
-void write_to_fifo_statistics(double time, int items){
+void write_to_fifo_statistics(double time, int items, double cpu_usage){
 	char *fn_total_time = "fifo_statistics/fifo_total_time.txt";
 	char *fn_average_time = "fifo_statistics/fifo_average_time.txt";
+	char *fn_cpu_usage = "fifo_statistics/fifo_cpu_usage.txt";
 
 	char time_[50];
 	sprintf(time_, "%f", time);
@@ -236,7 +248,9 @@ void write_to_fifo_statistics(double time, int items){
 	strcat(pair, "]");
 	strcat(buffer1, pair);
 	fprintf(fp_total_time, "%s", pair);
-	
+	fclose(fp_total_time);
+
+
 	double average = (double)time/items;
 	char average_time[50];
 	sprintf(average_time, "%f", average);
@@ -255,4 +269,19 @@ void write_to_fifo_statistics(double time, int items){
 	fprintf(fp_average_time, "%s", pair2);
 	fclose(fp_average_time);
 
+	char cpu_usage_[50];
+	sprintf(cpu_usage_, "%f", cpu_usage);
+	FILE * fp_cpu_usage = fopen(fn_cpu_usage, "r+");
+	char buffer3[1000000];
+	memset(buffer3, 0, sizeof(buffer3));
+	fscanf(fp_cpu_usage, "%s", buffer3);
+	char pair3[50];
+	memset(pair3, 0, sizeof(pair3));
+	strcat(pair3, "[");
+	strcat(pair3, items_);
+	strcat(pair3, ",");
+	strcat(pair3, cpu_usage_);
+	strcat(pair3, "]");
+	fprintf(fp_cpu_usage, "%s", pair3);
+	fclose(fp_cpu_usage);
 }

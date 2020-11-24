@@ -13,5 +13,5 @@ void take_send_image(char* ip, char*port, char* fname, char*threads, char*cycles
 int detect_extension_pgm(char* file);
 int detectar_final(char* comando);
 void init_reading(void* msg, double init_time, int threads);
-void write_to_fifo_statistics(double time, int items);
+void write_to_fifo_statistics(double time, int items, double cpu_usage);
 #endif

@@ -12,8 +12,9 @@
 #include <sys/types.h>
 #include <zlib.h>
 #include <dirent.h>
+#include <time.h>
 #define MAXCHAR 1000
-#define PORT 8103
+#define PORT 8111
 char storage_directory_[] = "../fifo_storage/";
 int init_fifo_server(void){
     int fd =0, confd = 0,b,tot;
@@ -38,6 +39,7 @@ int init_fifo_server(void){
     listen(fd, 1000000);
     int counter = 0;
     //confd = accept(fd, (struct sockaddr*)&client, &len);
+    printf("hola");
     while (1)
     {
         confd = accept(fd, (struct sockaddr*)&client, &len);
@@ -49,6 +51,12 @@ int init_fifo_server(void){
         read(confd, filename, 256);
         if (strcmp(filename, "final") == 0)
         {
+            char time[100];
+            clock_t b_time;
+	        b_time = clock();
+            sprintf(time, "%ld", b_time);
+            write(confd, time, 100);
+            //write(confd, "Hola", 4);
             break;
         }
         printf("Fname: %s\n", filename);
