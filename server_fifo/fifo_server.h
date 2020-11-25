@@ -3,5 +3,5 @@
 //char *storage_directory_ = "./fifo_storage";
 void process_image(char* file_name, int index);
 int init_fifo_server(void);
-void send_finish(void);
+void python_image_process(char *filename);
 #endif

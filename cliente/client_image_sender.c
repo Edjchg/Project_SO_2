@@ -31,7 +31,6 @@ void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycle
 	new_message.port = port_;
 	new_message.server = server_;
 	//while(1){
-	printf("%i\n", threads_);
 	//Creating the threads:
 	pthread_t threads_list[threads_];
 	void * retvals[threads_];
@@ -62,7 +61,6 @@ void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycle
 	{
 		printf("\033[1;31mThis is not a valid extension file \033[0m;\n");
 	}
-	
 	init_reading(&new_message, (double)b_time, threads_);
 }
 //######################################################################################################################################
@@ -86,7 +84,7 @@ int detect_extension_pgm(char *file){
 		}
 	}
 	printf("La extension del archivo es: %s\n", buffer);
-	if(strcmp(buffer,".pgm") == 0){
+	if(strcmp(buffer,".png") == 0){
 		return 1;
 	}else{
 		return 0;
@@ -103,7 +101,7 @@ void* send_file (void* argument){
 	struct message *new_message = (struct message *)argument;
 
 	printf("Nuevo mensaje de un archivo %s con el ip %s y un numero de ciclos de %i\n", new_message->image_name, new_message->ip, new_message->cycles);
-	/*
+	
 	int sfd =0, n=0, b;
 	char rbuff[1024];
 	char sendbuffer[100];
@@ -117,19 +115,19 @@ void* send_file (void* argument){
 	serv_addr.sin_port = htons(new_message->port);
 	//serv_addr.sin_addr.s_addr = inet_addr("192.168.1.8");
 	serv_addr.sin_addr.s_addr = inet_addr(new_message->ip);
-
+	/*
 	b=connect(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 	if (b==-1) {
 	    perror("Connect");
 	    exit(1);
 	}*/
-	
+	FILE *fp;
 
 	
 	
 	int index = 0;
 	while(index < new_message->cycles){
-		
+		/*
 		int sfd =0, n=0, b;
 		char rbuff[1024];
 		char sendbuffer[100];
@@ -143,13 +141,14 @@ void* send_file (void* argument){
 		serv_addr.sin_port = htons(new_message->port);
 		//serv_addr.sin_addr.s_addr = inet_addr("192.168.1.8");
 		serv_addr.sin_addr.s_addr = inet_addr(new_message->ip);
-
+		*/
+		sfd = socket(AF_INET, SOCK_STREAM, 0);
 		b=connect(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 		if (b==-1) {
 			perror("Connect");
 			exit(1);
 		}
-		FILE *fp = fopen(new_message->image_name, "rb");
+		fp = fopen(new_message->image_name, "rb");
 		
 		write(sfd, new_message->image_name, 256);
 		
@@ -161,12 +160,14 @@ void* send_file (void* argument){
 		while( (b = fread(sendbuffer, 1, sizeof(sendbuffer), fp))>0 ){
 			send(sfd, sendbuffer, b, 0);
 		}
-		strcpy(sendbuffer, " ");
+		//strcpy(sendbuffer, " ");
+		memset(sendbuffer, 0, sizeof(sendbuffer));
 		index++;
 		fclose(fp);
-		printf("Dentro de los while\n");
 		fp = NULL;
 		close(sfd);
+		sfd = 0;
+		b = 0;
 
 	}
 	//send(sfd, "final", 5, 0);
@@ -197,20 +198,18 @@ void init_reading(void* msg, double init_time, int threads){
 	}
 	send(sfd, "final\n", 5, 0);
 	int time_;
-	while(1){
+	//while(1){
 		
 		if(read(sfd, sendbuffer, 256) != -1){
 			printf("%s\n", sendbuffer);
-			time_ = atoi(sendbuffer);
-			break;
+			time_ = atol(sendbuffer);
 		}
-		printf("Reading\n");
 		
-	}
+	//}
 	double tiempo_tomado = ((double)time_ - init_time)/CLOCKS_PER_SEC;
 	struct timespec gettimenow;
 	double wall_time = ( (double)gettimenow.tv_sec + ( (double)gettimenow.tv_nsec / NANO2SEC ) );
-	double cpu_time = ( (double)clock() / sysconf (_SC_CLK_TCK));
+	double cpu_time = ( (double)time_ / sysconf (_SC_CLK_TCK));
 	//double cpu_time = ( (double)time_ / sysconf (_SC_CLK_TCK));
 	double proc_n = sysconf(_SC_NPROCESSORS_ONLN);
 	double cpu_usage = cpu_time/proc_n/wall_time;
