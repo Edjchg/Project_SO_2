@@ -90,7 +90,6 @@ int detect_extension_pgm(char *file){
 		return 0;
 	}
 }
-//######################################################################################################################################
 /*######################################################################################################################################
 La función enviar_archivo recibe como parámetro: ip -> Que es el ip del servidor, el nombre del archivo a enviar.
 Lee el archivo de la carpeta donde se encuentra, divide al archivo en chunks de información que envia por medio de socket al servidor.
@@ -99,49 +98,22 @@ Lee el archivo de la carpeta donde se encuentra, divide al archivo en chunks de 
 void* send_file (void* argument){
 	//Casting the argument to the struct
 	struct message *new_message = (struct message *)argument;
-
 	printf("Nuevo mensaje de un archivo %s con el ip %s y un numero de ciclos de %i\n", new_message->image_name, new_message->ip, new_message->cycles);
-	
 	int sfd =0, n=0, b;
 	char rbuff[1024];
 	char sendbuffer[100];
 	struct sockaddr_in serv_addr;
-
 	memset(rbuff, '0', sizeof(rbuff));
 	sfd = socket(AF_INET, SOCK_STREAM, 0);
-
 	serv_addr.sin_family = AF_INET;
-	//serv_addr.sin_port = htons(5000);
 	serv_addr.sin_port = htons(new_message->port);
-	//serv_addr.sin_addr.s_addr = inet_addr("192.168.1.8");
 	serv_addr.sin_addr.s_addr = inet_addr(new_message->ip);
-	/*
-	b=connect(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-	if (b==-1) {
-	    perror("Connect");
-	    exit(1);
-	}*/
 	FILE *fp;
 
 	
 	
 	int index = 0;
 	while(index < new_message->cycles){
-		/*
-		int sfd =0, n=0, b;
-		char rbuff[1024];
-		char sendbuffer[100];
-		struct sockaddr_in serv_addr;
-
-		memset(rbuff, '0', sizeof(rbuff));
-		sfd = socket(AF_INET, SOCK_STREAM, 0);
-
-		serv_addr.sin_family = AF_INET;
-		//serv_addr.sin_port = htons(5000);
-		serv_addr.sin_port = htons(new_message->port);
-		//serv_addr.sin_addr.s_addr = inet_addr("192.168.1.8");
-		serv_addr.sin_addr.s_addr = inet_addr(new_message->ip);
-		*/
 		sfd = socket(AF_INET, SOCK_STREAM, 0);
 		b=connect(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 		if (b==-1) {
@@ -215,19 +187,16 @@ void init_reading(void* msg, double init_time, int threads){
 	double cpu_usage = cpu_time/proc_n/wall_time;
 	printf("%ld\n", clock());
 	printf("\033[1;31m El programa duró %f, con %i elementos y un %f de CPU.\033[0m; \n", tiempo_tomado, new_message->cycles*threads, cpu_usage);
-	// Writing the statistics for the FIFO Server:
-	if (new_message->server == 1)
-	{
+	// Writing the statistics for the servers
+	if (new_message->server == 1){
 		write_to_fifo_statistics(tiempo_tomado, new_message->cycles*threads, cpu_usage);
 	}
-	
-	
+	else if(new_message->server == 2){
+		write_to_hp_statistics(tiempo_tomado, new_message->cycles*threads, cpu_usage);
+	}
 }
-void write_to_fifo_statistics(double time, int items, double cpu_usage){
-	char *fn_total_time = "fifo_statistics/fifo_total_time.txt";
-	char *fn_average_time = "fifo_statistics/fifo_average_time.txt";
-	char *fn_cpu_usage = "fifo_statistics/fifo_cpu_usage.txt";
 
+void write_file(double time, int items, double cpu_usage, char fn_total_time[], char fn_average_time[], char fn_cpu_usage[]){
 	char time_[50];
 	sprintf(time_, "%f", time);
 	char items_[50];
@@ -283,4 +252,18 @@ void write_to_fifo_statistics(double time, int items, double cpu_usage){
 	strcat(pair3, "]");
 	fprintf(fp_cpu_usage, "%s", pair3);
 	fclose(fp_cpu_usage);
+}
+
+void write_to_fifo_statistics(double time, int items, double cpu_usage){
+	char *fn_total_time = "fifo_statistics/fifo_total_time.txt";
+	char *fn_average_time = "fifo_statistics/fifo_average_time.txt";
+	char *fn_cpu_usage = "fifo_statistics/fifo_cpu_usage.txt";
+	write_file(time, items, cpu_usage, fn_total_time, fn_average_time, fn_cpu_usage);
+}
+
+void write_to_hp_statistics(double time, int items, double cpu_usage){
+	char *fn_total_time = "hp_statistics/hp_total_time.txt";
+	char *fn_average_time = "hp_statistics/hp_average_time.txt";
+	char *fn_cpu_usage = "hp_statistics/hp_cpu_usage.txt";
+	write_file(time, items, cpu_usage, fn_total_time, fn_average_time, fn_cpu_usage);
 }

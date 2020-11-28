@@ -75,7 +75,6 @@ int init_fifo_server(void){
 		    
             fclose(fp);
             fp = NULL;
-            
         }
 
         python_image_process(storage_directory_);
