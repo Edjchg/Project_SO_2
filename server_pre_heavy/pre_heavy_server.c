@@ -69,32 +69,45 @@ int init_pre_heavy_server(int num_p)
                 b_time = clock();
                 sprintf(time, "%ld", b_time);
                 write(confd, time, 100);
-                printf("En espera \n");
+                close(fd);
+                while (check_pross() == -1){}
+                kill_pross();
+                break;
             }
             else
             {
                 printf("Send confd : %d \n", confd);
                 user_send(confd); 
-                assing_job_pross(filename, counter);
-                //handling_con(confd, counter, filename);
+                while (assing_job_pross(filename, counter) == -1){}
                 counter++;
-                //kill_pross();
             }
         }
         else
         {
             return 0;
         }
-        
-    }
-    if (getpid() == pid_father)  close(fd);
-    
+    }    
 }
-void process_image(char file_name[], int index){
-    //Use sobel function...
-    //apply_sobel(file_name, index);
-    printf("Processing the image %s with sobel algorithm\n", file_name);
 
+int check_pross()
+{
+    struct pross *temp;
+    temp = pross_head;
+    while (temp != NULL)       
+    {
+        if (temp->flag == 1)
+        {
+            return -1;
+        }            
+        temp = temp->next;
+    }
+    return 0;
+} 
+
+void python_image_process(char *filename){
+    char cmd[200];
+    strcpy(cmd, "python3 ../python_sobel/python_sobel.py ");
+    int x = system(strcat(cmd, filename));
 }
 
 void handling_con(int confd, int counter, char *filename)
@@ -128,8 +141,9 @@ void handling_con(int confd, int counter, char *filename)
             if (b<0){
                 perror("Receiving");
             }            
-            process_image(storage_directory_, counter);
             fclose(fp);
+            printf("%s \n", storage_directory_);
+            python_image_process(storage_directory_);
             fp = NULL;
             strcpy(storage_directory_, "../pre_heavy_storage/");
         }

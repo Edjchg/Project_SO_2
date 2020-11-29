@@ -4,9 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
@@ -14,8 +12,9 @@
 #include <dirent.h>
 #include <time.h>
 #include <signal.h>
+#include <sys/wait.h>
 #define MAXCHAR 1000
-#define PORT 8021
+#define PORT 8020
 char storage_directory_[] = "../heavy_process_storage/";
 
 int init_heavy_process_server(void){
@@ -32,18 +31,32 @@ int init_heavy_process_server(void){
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(PORT);
-    bind(sockd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    if (bind(sockd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+        perror("Binding fail");
+        close(sockd);
+        return 0;
+    }
     listen(sockd, 1000000);
     int counter = 0;
     char time[100];
     pid_t child_pid;
+    struct pross *list_pross = NULL;
     while(1){
         if((confd = accept(sockd, (struct sockaddr *) &serv_addr, (socklen_t *) &len)) < 0){
             printf("Error en la conexion\n");
         }
         read(confd, filename, 256);
-        printf("%s\n", filename);
-        if (strcmp(filename, "finalrga.png") == 0){
+        if (strcmp(filename, "final") == 0){
+            
+            struct pross *temp;
+            temp = list_pross;
+            int status;
+            while (temp != NULL)
+            {
+                waitpid(temp->id, &status, 0);
+                temp = temp->next;
+            }
+
             clock_t b_time;
             b_time = clock();
             sprintf(time, "%ld", b_time);
@@ -82,20 +95,28 @@ int init_heavy_process_server(void){
                 printf("Fp es Null\n");
             }
             python_image_process(storage_directory_);
-            memset(filename, 0, sizeof(filename));
+            //memset(filename, 0, sizeof(filename));
             memset(str, 0, sizeof(str));
             memset(buff, 0, sizeof(buff));
             b = 0;
             tot = 0;
-            printf("%i\n", counter);
             close(confd);
             confd = 0;
             exit(0);
         }
+
+        struct pross *temp = malloc(sizeof(struct pross));
+        temp->id = child_pid;       
+        temp->next = list_pross;
+        list_pross = temp;
+
+        memset(filename, 0, sizeof(filename));
         memset(storage_directory_, 0, sizeof(storage_directory_));
         strcpy(storage_directory_, "../heavy_process_storage/");
         counter++;
     }
+    close(sockd);
+    free(list_pross);
 }
 
 void python_image_process(char *filename){

@@ -23,7 +23,8 @@ void exec_pross();
 void init_pross();
 void kill_pross();
 int assing_job_pross();
-
 void* create_shared_memory();
+void python_image_process(char *filename);
+int check_pross();
 
 #endif

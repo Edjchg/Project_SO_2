@@ -16,6 +16,7 @@
 void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycles, char* server){
 	//char fname[100];
 	//Converting the arguments to integers:
+	printf("%d \n", getpid());
 	int valido = 0;
 	int final = 0;
 	int port_ = atoi(port);
@@ -41,7 +42,9 @@ void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycle
 		
 		{
 		//send_file(&new_message);
-		
+		pthread_t cpu_used;
+		flag_cpuc = 1;
+		pthread_create(&cpu_used, NULL, &get_cpu_counter, NULL);
 		for (int i = 0; i < threads_; ++i){
 			if (pthread_create(&threads_list[i], NULL, send_file, &new_message) != 0){
 				printf("\033[1;31mERROR: Can not create %i thread \033[0m;\n", i);
@@ -95,7 +98,7 @@ La función enviar_archivo recibe como parámetro: ip -> Que es el ip del servid
 Lee el archivo de la carpeta donde se encuentra, divide al archivo en chunks de información que envia por medio de socket al servidor.
 */
 //int send_file(char* ip, char* file_name, int cycles){
-void* send_file (void* argument){
+void*  send_file (void* argument){
 	//Casting the argument to the struct
 	struct message *new_message = (struct message *)argument;
 	printf("Nuevo mensaje de un archivo %s con el ip %s y un numero de ciclos de %i\n", new_message->image_name, new_message->ip, new_message->cycles);
@@ -172,11 +175,12 @@ void init_reading(void* msg, double init_time, int threads){
 	int time_;
 	//while(1){
 		
-		if(read(sfd, sendbuffer, 256) != -1){
-			printf("%s\n", sendbuffer);
-			time_ = atol(sendbuffer);
-		}
-		
+	if(read(sfd, sendbuffer, 256) != -1){
+		printf("%s\n", sendbuffer);
+		time_ = atol(sendbuffer);
+	}
+	flag_cpuc = 0;	
+	printf("Result cpu: %Lf \n", result_cpuc);
 	//}
 	double tiempo_tomado = ((double)time_ - init_time)/CLOCKS_PER_SEC;
 	struct timespec gettimenow;
@@ -184,15 +188,18 @@ void init_reading(void* msg, double init_time, int threads){
 	double cpu_time = ( (double)time_ / sysconf (_SC_CLK_TCK));
 	//double cpu_time = ( (double)time_ / sysconf (_SC_CLK_TCK));
 	double proc_n = sysconf(_SC_NPROCESSORS_ONLN);
-	double cpu_usage = cpu_time/proc_n/wall_time;
+	double cpu_usage = cpu_time/wall_time;
 	printf("%ld\n", clock());
 	printf("\033[1;31m El programa duró %f, con %i elementos y un %f de CPU.\033[0m; \n", tiempo_tomado, new_message->cycles*threads, cpu_usage);
 	// Writing the statistics for the servers
 	if (new_message->server == 1){
-		write_to_fifo_statistics(tiempo_tomado, new_message->cycles*threads, cpu_usage);
+		write_to_fifo_statistics(tiempo_tomado, new_message->cycles*threads, result_cpuc);
 	}
 	else if(new_message->server == 2){
-		write_to_hp_statistics(tiempo_tomado, new_message->cycles*threads, cpu_usage);
+		write_to_hp_statistics(tiempo_tomado, new_message->cycles*threads, result_cpuc);
+	}
+	else if(new_message->server == 3){
+		write_to_php_statistics(tiempo_tomado, new_message->cycles*threads, result_cpuc);
 	}
 }
 
@@ -266,4 +273,39 @@ void write_to_hp_statistics(double time, int items, double cpu_usage){
 	char *fn_average_time = "hp_statistics/hp_average_time.txt";
 	char *fn_cpu_usage = "hp_statistics/hp_cpu_usage.txt";
 	write_file(time, items, cpu_usage, fn_total_time, fn_average_time, fn_cpu_usage);
+}
+
+void write_to_php_statistics(double time, int items, double cpu_usage){
+	char *fn_total_time = "php_statistics/php_total_time.txt";
+	char *fn_average_time = "php_statistics/php_average_time.txt";
+	char *fn_cpu_usage = "php_statistics/php_cpu_usage.txt";
+	write_file(time, items, cpu_usage, fn_total_time, fn_average_time, fn_cpu_usage);
+}
+
+void *get_cpu_counter(void *arg)
+{
+    long double a[4], b[4], loadavg;
+    FILE *fp;
+    char dump[50];
+
+    while (flag_cpuc == 1)	
+    {
+        fp = fopen("/proc/loadavg","r");
+		fscanf(fp, "%*s %Lf", &a[0]);
+		//fscanf(fp,"%*s %Lf %Lf %Lf %Lf",&a[0],&a[1],&a[2],&a[3]);
+        fclose(fp);
+        sleep(1);
+		double y = a[0]*100;
+		double proc_n = sysconf(_SC_NPROCESSORS_ONLN);
+		y = y / proc_n;
+		printf("%f \n",y); 
+		/*       fp = fopen("/proc/stat","r");
+        fscanf(fp,"%*s %Lf %Lf %Lf %Lf",&b[0],&b[1],&b[2],&b[3]);
+        fclose(fp);*/ 
+		counter_cpu++;
+       // result_cpuc = ((b[0]+b[1]+b[2]) - (a[0]+a[1]+a[2])) / ((b[0]+b[1]+b[2]+b[3]) - (a[0]+a[1]+a[2]+a[3]));
+		result_cpuc += y;
+	    printf("The current CPU utilization is : %Lf\n", result_cpuc);
+    }
+	result_cpuc = result_cpuc/counter_cpu;
 }
