@@ -1,11 +1,11 @@
 #ifndef PRE_HEAVY_SERVER_H
 #define PRE_HEAVY_SERVER_H
 //char *storage_directory_ = "./fifo_storage";
-
-struct pross{
+#include <sys/types.h>
+struct pross{ 
     struct pross *next;
     char filename[256];
-    int pid_pross;
+    pid_t pid_pross;
     int fd_client;
     int counter;
     int num_pross;
