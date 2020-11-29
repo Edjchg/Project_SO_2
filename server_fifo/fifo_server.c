@@ -14,7 +14,7 @@
 #include <dirent.h>
 #include <time.h>
 #define MAXCHAR 1000
-#define PORT 8103
+#define PORT 8108
 char storage_directory_[] = "../fifo_storage/";
 int init_fifo_server(void){
     int fd =0, confd = 0,b,tot;
