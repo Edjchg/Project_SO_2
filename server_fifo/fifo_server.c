@@ -14,7 +14,7 @@
 #include <dirent.h>
 #include <time.h>
 #define MAXCHAR 1000
-#define PORT 8102
+#define PORT 8103
 char storage_directory_[] = "../fifo_storage/";
 int init_fifo_server(void){
     int fd =0, confd = 0,b,tot;
@@ -31,7 +31,11 @@ int init_fifo_server(void){
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(PORT);
     FILE* fp;
-    bind(fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    if (bind(fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))){
+        perror("Binding fail");
+        close(fd);
+        return 0;
+    };
     listen(fd, 1000000);
     int counter = 0;
     char time[100];
