@@ -9,6 +9,15 @@
 #include <unistd.h>
 #include "fd_shared.h"
 
+/**
+ * El funcionamiento de estos metodos fueron tomados de 
+ * https://stackoverflow.com/questions/28003921/sending-file-descriptor-by-linux-socket/
+ * 
+ * */
+
+/**
+ * Funcion utilizada por el padre para enviar el file descriptor a los hijos.
+ * */
 void send_fd(int socket, int fd)  // send fd by socket
 {
     struct msghdr msg = { 0 };
@@ -34,6 +43,11 @@ void send_fd(int socket, int fd)  // send fd by socket
       printf("Failed to send message\n");
 }
 
+
+/**
+ * Funcion utilizada por los hijos para recibir el file 
+ * descriptor de los clientes.
+ * */
 int receive_fd(int socket)  // receive fd from socket
 {
     struct msghdr msg = {0};
@@ -56,6 +70,10 @@ int receive_fd(int socket)  // receive fd from socket
     return fd;
 }
 
+
+/**
+ * Configuracion inical del socketpair.
+ * */
 int configure_socket_pair(){
     if(socketpair(AF_UNIX, SOCK_DGRAM, 0, sv) != 0)
     {
@@ -65,6 +83,10 @@ int configure_socket_pair(){
     return 0;
 }
 
+
+/**
+ * Funcion final usada por el padre para enviar el fd
+ * */
 void user_send(int fd){
     int sock = sv[0];
     send_fd(sock, fd);
@@ -72,6 +94,9 @@ void user_send(int fd){
     nanosleep(&(struct timespec) {.tv_sec = 0, .tv_nsec = 5000000}, 0);
 }
 
+/**
+ * Funcion final usada por los hijos para recibir el fd
+ * */
 int user_receive() {
     int sock = sv[1];
     nanosleep(&(struct timespec) {.tv_sec = 0, .tv_nsec = 5000000}, 0);

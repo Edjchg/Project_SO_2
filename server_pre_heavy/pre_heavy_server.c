@@ -16,11 +16,18 @@
 #include <time.h>
 #include <sys/mman.h> 
 #define MAXCHAR 1000
-#define PORT 8115
+#define PORT 8116
 
+/**
+ * Funcion principal. Inicio de procesos hijos, el servidor y ciclo del 
+ *  procesos padre para atender y assignar las peticiones del cliente.
+ * 
+ * int num_p: Numero de procesos hijos que se deben crear.
+ * */
 int init_pre_heavy_server(int num_p)
 {
     int pid_father = getpid();
+    printf("%d \n", pid_father);
     int fd =0, confd = 0;
     struct sockaddr_in serv_addr;    
     struct sockaddr_in client;
@@ -50,6 +57,7 @@ int init_pre_heavy_server(int num_p)
     printf("Listening..\n");
     
     pross_head = NULL;
+    int num_s = 0;
     configure_socket_pair();
     init_pross(num_p);  
     while (1)
@@ -57,8 +65,8 @@ int init_pre_heavy_server(int num_p)
         if (getpid() == pid_father)
         {  
             confd = accept(fd, (struct sockaddr*)&client, &len);
-            printf("\n=> El IP del cliente es: %s\n", inet_ntop(AF_INET, &client.sin_addr, str, sizeof(str)));
-            printf("=> EL id del cliente es: %i\n", confd);
+            //printf("\n=> El IP del cliente es: %s\n", inet_ntop(AF_INET, &client.sin_addr, str, sizeof(str)));
+            //printf("=> EL id del cliente es: %i\n", confd);
             char filename[256];
             memset(filename, 0, sizeof(filename));
             read(confd, filename, 256);
@@ -69,17 +77,22 @@ int init_pre_heavy_server(int num_p)
                 b_time = clock();
                 sprintf(time, "%ld", b_time);
                 write(confd, time, 100);
-                close(fd);
                 while (check_pross() == -1){}
+                close(fd);
                 kill_pross();
                 break;
             }
             else
             {
-                printf("Send confd : %d \n", confd);
+                printf("Solicitud # %d \n", num_s);
+                if (counter == 100)
+                {
+                    counter = 0;
+                }
                 user_send(confd); 
                 while (assing_job_pross(filename, counter) == -1){}
                 counter++;
+                num_s++;
             }
         }
         else
@@ -89,6 +102,10 @@ int init_pre_heavy_server(int num_p)
     }    
 }
 
+/**
+ * Verifica si algun proceso se esta ejecutando.
+ * Si se estan ejecutan devuelve -1 de lo contrario un 0.
+ * */
 int check_pross()
 {
     struct pross *temp;
@@ -104,18 +121,29 @@ int check_pross()
     return 0;
 } 
 
-void python_image_process(char *filename){
+/**
+ * Se encarga de ejecutar el script de python que 
+ * aplica el filtro.
+ * 
+ * char *filename: ruta y nombre de la imagen 
+*/
+void python_image_process(char *filename)
+{
     char cmd[200];
     strcpy(cmd, "python3 ../python_sobel/python_sobel.py ");
     int x = system(strcat(cmd, filename));
 }
 
+/**
+ * Funcion utilizada por los hijos para recibir la imagen 
+ * y ejecutar la aplicacion del filtro.
+ * */
 void handling_con(int confd, int counter, char *filename)
 {
     char storage_directory_[256] = "../pre_heavy_storage/";
     int flag = 1, tot, b;
-    if (flag == 1){
-        printf("Fname: %s\n", filename);
+    if (flag == 1)
+    {
         char str[100];
         if(counter < 100){
             sprintf(str, "%d", counter);
@@ -137,23 +165,26 @@ void handling_con(int confd, int counter, char *filename)
                     tot+=b;
                     fwrite(buff, 1, b, fp);
             }
-            printf("=> Su peso es de: %d bytes.\n",tot);
             if (b<0){
                 perror("Receiving");
             }            
             fclose(fp);
-            printf("%s \n", storage_directory_);
             python_image_process(storage_directory_);
             fp = NULL;
             strcpy(storage_directory_, "../pre_heavy_storage/");
         }
         strcpy(storage_directory_, "../pre_heavy_storage/");
-        printf("Uno más\n");
     }
     memset(filename, 0, sizeof(filename));
 }
 
-void init_pross(int num_pross){
+
+/**
+ * Inicia los procesos hijos y los agrega a la lista 
+ * para el control del proceso padre.
+ * */
+void init_pross(int num_pross)
+{
     for (size_t i = 0; i < num_pross; i++)
     {   
         struct pross *p1 = (struct pross *) create_shared_memory(sizeof(pross));
@@ -166,7 +197,7 @@ void init_pross(int num_pross){
         if ((pid_t == 0))
         {
             p1->pid_pross = getpid();
-            printf("Creation process %d\n", (*p1).pid_pross);
+            printf("Proceso creado! ID: %d\n", (*p1).pid_pross);
             exec_pross(p1);
             return;
         }   
@@ -174,37 +205,50 @@ void init_pross(int num_pross){
     return;
 }
 
-void exec_pross(struct pross *p1){
+/**
+ * Ciclo de los procesos para esperar la assignacion de 
+ * tareas.
+ * 
+ * struct pross *p1: procesos hijo a ejecutar el ciclo. 
+ * */
+void exec_pross(struct pross *p1)
+{
     while (1)
     {
+        p1->flag = 0;
+        kill(p1->pid_pross, SIGSTOP);
         if (p1->f == 1)
         {
+            p1->flag = 0;
+            printf("Dying ID: %d \n", p1->pid_pross);
             return;
         }
-        if(p1->flag == 1){
-            p1->fd_client = user_receive();
-            handling_con(p1->fd_client, p1->counter, p1->filename);
-            p1->flag = 0;
-        }
-        else
-        {
-
-        }
+        p1->fd_client = user_receive();
+        handling_con(p1->fd_client, p1->counter, p1->filename);  
     }
 }
-
+/**
+ * Manda la senal para que los procesos hijos se terminen.
+ * */
 void kill_pross()
 {
     struct pross *temp;
     temp = pross_head;
     while (temp != NULL)       
     {
-        temp->f =1;
-        printf("Killing child process id: %d \n", temp->pid_pross);
+        temp->f = 1;
+        printf("Parando el proceso! ID: %d \n", temp->pid_pross);
+        kill(temp->pid_pross, SIGCONT);
         temp = temp->next;
     }
 }
-
+/**
+ * Funcion utilizada por el padre para assignar trabajos a los 
+ * hijos cuando esten disponibles.
+ * 
+ * char *filename: Nombre de la imagen.
+ * int counter: Numero de imgenes que se han recibido.
+ * */
 int assing_job_pross(char *filename, int counter)
 {
     struct pross *temp;
@@ -213,10 +257,12 @@ int assing_job_pross(char *filename, int counter)
     {
         if (temp->flag == 0)
         {
-            printf("Process child id: %d assigned job \n", temp->pid_pross);
+            int status;
+            waitpid(temp->pid_pross, &status, WUNTRACED);
             strcpy(temp->filename, filename);
             temp->counter = counter;
             temp->flag = 1;
+            kill(temp->pid_pross, SIGCONT);
             return 0;
         }            
         else
@@ -226,6 +272,7 @@ int assing_job_pross(char *filename, int counter)
     }
     return -1;
 }
+
 /**
  * https://stackoverflow.com/questions/5656530/how-to-use-shared-memory-with-linux-in-c
  * */
