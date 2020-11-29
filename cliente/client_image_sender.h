@@ -20,8 +20,8 @@ void take_send_image(char* ip, char*port, char* fname, char*threads, char*cycles
 int detect_extension_pgm(char* file);
 int detectar_final(char* comando);
 void init_reading(void* msg, double init_time, int threads);
-void write_file(double time, int items, double cpu_usage, char fn_total_time[], char fn_average_time[], char fn_cpu_usage[]);
-void write_to_fifo_statistics(double time, int items, double cpu_usage);
-void write_to_hp_statistics(double time, int items, double cpu_usage);
-void write_to_php_statistics(double time, int items, double cpu_usage);
+void write_file(long time, int items, double cpu_usage, char fn_total_time[], char fn_average_time[], char fn_cpu_usage[]);
+void write_to_fifo_statistics(long time, int items, double cpu_usage);
+void write_to_hp_statistics(long time, int items, double cpu_usage);
+void write_to_php_statistics(long time, int items, double cpu_usage);
 #endif

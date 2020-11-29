@@ -172,7 +172,7 @@ void init_reading(void* msg, double init_time, int threads){
 		exit(1);
 	}
 	send(sfd, "final\n", 5, 0);
-	int time_;
+	long time_;
 	//while(1){
 		
 	if(read(sfd, sendbuffer, 256) != -1){
@@ -182,7 +182,7 @@ void init_reading(void* msg, double init_time, int threads){
 	flag_cpuc = 0;	
 	printf("Result cpu: %Lf \n", result_cpuc);
 	//}
-	double tiempo_tomado = ((double)time_ - init_time)/CLOCKS_PER_SEC;
+	//double tiempo_tomado = ((double)time_ - init_time)/CLOCKS_PER_SEC;
 	struct timespec gettimenow;
 	double wall_time = ( (double)gettimenow.tv_sec + ( (double)gettimenow.tv_nsec / NANO2SEC ) );
 	double cpu_time = ( (double)time_ / sysconf (_SC_CLK_TCK));
@@ -190,22 +190,22 @@ void init_reading(void* msg, double init_time, int threads){
 	double proc_n = sysconf(_SC_NPROCESSORS_ONLN);
 	double cpu_usage = cpu_time/wall_time;
 	printf("%ld\n", clock());
-	printf("\033[1;31m El programa duró %f, con %i elementos y un %f de CPU.\033[0m; \n", tiempo_tomado, new_message->cycles*threads, cpu_usage);
+	printf("\033[1;31m El programa duró %ld, con %i elementos y un %f de CPU.\033[0m; \n", time_, new_message->cycles*threads, cpu_usage);
 	// Writing the statistics for the servers
 	if (new_message->server == 1){
-		write_to_fifo_statistics(tiempo_tomado, new_message->cycles*threads, result_cpuc);
+		write_to_fifo_statistics(time_, new_message->cycles*threads, result_cpuc);
 	}
 	else if(new_message->server == 2){
-		write_to_hp_statistics(tiempo_tomado, new_message->cycles*threads, result_cpuc);
+		write_to_hp_statistics(time_, new_message->cycles*threads, result_cpuc);
 	}
 	else if(new_message->server == 3){
-		write_to_php_statistics(tiempo_tomado, new_message->cycles*threads, result_cpuc);
+		write_to_php_statistics(time_, new_message->cycles*threads, result_cpuc);
 	}
 }
 
-void write_file(double time, int items, double cpu_usage, char fn_total_time[], char fn_average_time[], char fn_cpu_usage[]){
+void write_file(long time, int items, double cpu_usage, char fn_total_time[], char fn_average_time[], char fn_cpu_usage[]){
 	char time_[50];
-	sprintf(time_, "%f", time);
+	sprintf(time_, "%ld", time);
 	char items_[50];
 	sprintf(items_, "%d", items);
 
@@ -261,21 +261,21 @@ void write_file(double time, int items, double cpu_usage, char fn_total_time[], 
 	fclose(fp_cpu_usage);
 }
 
-void write_to_fifo_statistics(double time, int items, double cpu_usage){
+void write_to_fifo_statistics(long time, int items, double cpu_usage){
 	char *fn_total_time = "fifo_statistics/fifo_total_time.txt";
 	char *fn_average_time = "fifo_statistics/fifo_average_time.txt";
 	char *fn_cpu_usage = "fifo_statistics/fifo_cpu_usage.txt";
 	write_file(time, items, cpu_usage, fn_total_time, fn_average_time, fn_cpu_usage);
 }
 
-void write_to_hp_statistics(double time, int items, double cpu_usage){
+void write_to_hp_statistics(long time, int items, double cpu_usage){
 	char *fn_total_time = "hp_statistics/hp_total_time.txt";
 	char *fn_average_time = "hp_statistics/hp_average_time.txt";
 	char *fn_cpu_usage = "hp_statistics/hp_cpu_usage.txt";
 	write_file(time, items, cpu_usage, fn_total_time, fn_average_time, fn_cpu_usage);
 }
 
-void write_to_php_statistics(double time, int items, double cpu_usage){
+void write_to_php_statistics(long time, int items, double cpu_usage){
 	char *fn_total_time = "php_statistics/php_total_time.txt";
 	char *fn_average_time = "php_statistics/php_average_time.txt";
 	char *fn_cpu_usage = "php_statistics/php_cpu_usage.txt";

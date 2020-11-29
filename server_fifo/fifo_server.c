@@ -37,8 +37,10 @@ int init_fifo_server(void){
         return 0;
     };
     listen(fd, 1000000);
+    time_t begin, end;
+    time(&begin);
     int counter = 0;
-    char time[100];
+    char time_[100];
     while (1)
     {
         confd = accept(fd, (struct sockaddr*)&client, &len);
@@ -48,10 +50,17 @@ int init_fifo_server(void){
         read(confd, filename, 256);
         if (strcmp(filename, "final") == 0)
         {
-            clock_t b_time;
+            /*clock_t b_time;
             b_time = clock();
             sprintf(time, "%ld", b_time);
-            write(confd, time, 100);
+            write(confd, time, 100);*/
+            time(&end);
+    		time_t elapsed = end - begin;
+    		printf("Time measured: %ld seconds.\n", elapsed);
+    		printf("Total server timetime: %ld\n", elapsed);
+    		sprintf(time_, "%ld", elapsed);
+    		write(confd, time_, 100);
+    		close(confd);
             break;
         }
         char str[100];

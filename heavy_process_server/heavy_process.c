@@ -14,7 +14,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #define MAXCHAR 1000
-#define PORT 8020
+#define PORT 8022
 char storage_directory_[] = "../heavy_process_storage/";
 
 int init_heavy_process_server(void){
@@ -37,8 +37,10 @@ int init_heavy_process_server(void){
         return 0;
     }
     listen(sockd, 1000000);
+    time_t begin, end;
+    time(&begin);
     int counter = 0;
-    char time[100];
+    char time_[100];
     pid_t child_pid;
     struct pross *list_pross = NULL;
     while(1){
@@ -57,10 +59,13 @@ int init_heavy_process_server(void){
                 temp = temp->next;
             }
 
-            clock_t b_time;
-            b_time = clock();
-            sprintf(time, "%ld", b_time);
-            write(confd, time, 100);
+            time(&end);
+    		time_t elapsed = end - begin;
+    		printf("Time measured: %ld seconds.\n", elapsed);
+    		printf("Total server timetime: %ld\n", elapsed);
+    		sprintf(time_, "%ld", elapsed);
+    		write(confd, time_, 100);
+    		close(confd);
             break;
         }
         char str[100];
