@@ -171,20 +171,20 @@ void init_reading(void* msg, double init_time, int threads){
 		time_ = atol(sendbuffer);
 	}
 	flag_cpuc = 0;	
-	result_cpuc =  result_cpuc/counter_cpu;
-	printf("Result cpu: %Lf \n",result_cpuc);
+	long double r_cpu =  result_cpuc/counter_cpu;
+	printf("Result cpu: %Lf \n",r_cpu);
 
 	printf("%ld\n", clock());
-	printf("\033[1;31m El programa duró %ld, con %i elementos y un %Lf de CPU.\033[0m; \n", time_, new_message->cycles*threads, result_cpuc);
+	printf("\033[1;31m El programa duró %ld, con %i elementos y un %Lf de CPU.\033[0m; \n", time_, new_message->cycles*threads, r_cpu);
 	// Writing the statistics for the servers
 	if (new_message->server == 1){
-		write_to_fifo_statistics(time_, new_message->cycles*threads, result_cpuc);
+		write_to_fifo_statistics(time_, new_message->cycles*threads, r_cpu);
 	}
 	else if(new_message->server == 2){
-		write_to_hp_statistics(time_, new_message->cycles*threads, result_cpuc);
+		write_to_hp_statistics(time_, new_message->cycles*threads, r_cpu);
 	}
 	else if(new_message->server == 3){
-		write_to_php_statistics(time_, new_message->cycles*threads, result_cpuc);
+		write_to_php_statistics(time_, new_message->cycles*threads, r_cpu);
 	}
 }
 
@@ -278,7 +278,6 @@ void *get_cpu_counter(void *arg)
         fp = fopen("/proc/loadavg","r");
 		fscanf(fp, "%*s %Lf", &a[0]);
         fclose(fp);
-        sleep(1);
 		double y = a[0]*100;
 		double proc_n = sysconf(_SC_NPROCESSORS_ONLN);
 		y = y / proc_n;
