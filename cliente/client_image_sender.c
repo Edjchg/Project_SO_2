@@ -16,7 +16,6 @@
 void take_send_image(char* ip,  char*port, char* fname, char*threads, char*cycles, char* server){
 	//char fname[100];
 	//Converting the arguments to integers:
-	printf("%d \n", getpid());
 	int valido = 0;
 	int final = 0;
 	int port_ = atoi(port);
@@ -113,8 +112,6 @@ void*  send_file (void* argument){
 	serv_addr.sin_addr.s_addr = inet_addr(new_message->ip);
 	FILE *fp;
 
-	
-	
 	int index = 0;
 	while(index < new_message->cycles){
 		sfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -126,7 +123,6 @@ void*  send_file (void* argument){
 		fp = fopen(new_message->image_name, "rb");
 		
 		write(sfd, new_message->image_name, 256);
-		
 		
 		if(fp == NULL){
 	    	perror("File");
@@ -145,9 +141,6 @@ void*  send_file (void* argument){
 		b = 0;
 
 	}
-	//send(sfd, "final", 5, 0);
-	//close(sfd);
-
 	
 }
 void init_reading(void* msg, double init_time, int threads){
@@ -173,24 +166,16 @@ void init_reading(void* msg, double init_time, int threads){
 	}
 	send(sfd, "final\n", 5, 0);
 	long time_;
-	//while(1){
-		
 	if(read(sfd, sendbuffer, 256) != -1){
-		printf("%s\n", sendbuffer);
+		//printf("%s\n", sendbuffer);
 		time_ = atol(sendbuffer);
 	}
 	flag_cpuc = 0;	
-	printf("Result cpu: %Lf \n", result_cpuc);
-	//}
-	//double tiempo_tomado = ((double)time_ - init_time)/CLOCKS_PER_SEC;
-	struct timespec gettimenow;
-	double wall_time = ( (double)gettimenow.tv_sec + ( (double)gettimenow.tv_nsec / NANO2SEC ) );
-	double cpu_time = ( (double)time_ / sysconf (_SC_CLK_TCK));
-	//double cpu_time = ( (double)time_ / sysconf (_SC_CLK_TCK));
-	double proc_n = sysconf(_SC_NPROCESSORS_ONLN);
-	double cpu_usage = cpu_time/wall_time;
+	result_cpuc =  result_cpuc/counter_cpu;
+	printf("Result cpu: %Lf \n",result_cpuc);
+
 	printf("%ld\n", clock());
-	printf("\033[1;31m El programa duró %ld, con %i elementos y un %f de CPU.\033[0m; \n", time_, new_message->cycles*threads, cpu_usage);
+	printf("\033[1;31m El programa duró %ld, con %i elementos y un %Lf de CPU.\033[0m; \n", time_, new_message->cycles*threads, result_cpuc);
 	// Writing the statistics for the servers
 	if (new_message->server == 1){
 		write_to_fifo_statistics(time_, new_message->cycles*threads, result_cpuc);
@@ -292,20 +277,12 @@ void *get_cpu_counter(void *arg)
     {
         fp = fopen("/proc/loadavg","r");
 		fscanf(fp, "%*s %Lf", &a[0]);
-		//fscanf(fp,"%*s %Lf %Lf %Lf %Lf",&a[0],&a[1],&a[2],&a[3]);
         fclose(fp);
         sleep(1);
 		double y = a[0]*100;
 		double proc_n = sysconf(_SC_NPROCESSORS_ONLN);
 		y = y / proc_n;
-		printf("%f \n",y); 
-		/*       fp = fopen("/proc/stat","r");
-        fscanf(fp,"%*s %Lf %Lf %Lf %Lf",&b[0],&b[1],&b[2],&b[3]);
-        fclose(fp);*/ 
 		counter_cpu++;
-       // result_cpuc = ((b[0]+b[1]+b[2]) - (a[0]+a[1]+a[2])) / ((b[0]+b[1]+b[2]+b[3]) - (a[0]+a[1]+a[2]+a[3]));
 		result_cpuc += y;
-	    printf("The current CPU utilization is : %Lf\n", result_cpuc);
     }
-	result_cpuc = result_cpuc/counter_cpu;
 }

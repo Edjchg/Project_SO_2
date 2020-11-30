@@ -59,7 +59,10 @@ int init_pre_heavy_server(int num_p)
     pross_head = NULL;
     int num_s = 0;
     configure_socket_pair();
-    init_pross(num_p);  
+    init_pross(num_p); 
+    time_t begin, end;
+    time(&begin); 
+    char time_[100];
     while (1)
     {
         if (getpid() == pid_father)
@@ -72,14 +75,15 @@ int init_pre_heavy_server(int num_p)
             read(confd, filename, 256);
             if (strcmp(filename, "final") == 0)
             {
-                char time[100];
-                clock_t b_time;
-                b_time = clock();
-                sprintf(time, "%ld", b_time);
-                write(confd, time, 100);
                 while (check_pross() == -1){}
-                close(fd);
                 kill_pross();
+                time(&end);
+                time_t elapsed = end - begin;
+                printf("Time measured: %ld seconds.\n", elapsed);
+                printf("Total server timetime: %ld\n", elapsed);
+                sprintf(time_, "%ld", elapsed);
+                write(confd, time_, 100);
+                close(fd);
                 break;
             }
             else
