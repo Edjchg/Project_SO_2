@@ -119,6 +119,10 @@ int init_heavy_process_server(void){
         memset(storage_directory_, 0, sizeof(storage_directory_));
         strcpy(storage_directory_, "../heavy_process_storage/");
         counter++;
+        if (counter == 100){
+            counter = 0;
+        }
+        
     }
     close(sockd);
     free(list_pross);

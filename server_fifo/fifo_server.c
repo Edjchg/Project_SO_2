@@ -61,6 +61,7 @@ int init_fifo_server(void){
     		sprintf(time_, "%ld", elapsed);
     		write(confd, time_, 100);
     		close(confd);
+            close(fd);
             break;
         }
         char str[100];
